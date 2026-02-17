@@ -3,15 +3,15 @@ import streamlit as st
 st.set_page_config(page_title="Despacho Económico", layout="wide")
 st.title("Simulador de despacho económico (México)")
 
-# 1) Inicializa una sola vez
+# Inicializa SOLO una vez
 if "sistema" not in st.session_state:
-    st.session_state["sistema"] = "SIN"
+    st.session_state.sistema = "SIN"
 
-# 2) Selectbox ligado al estado
 st.selectbox(
     "Selecciona el sistema eléctrico:",
     ["SIN", "BCA", "BCS"],
+    index=["SIN", "BCA", "BCS"].index(st.session_state.sistema),
     key="sistema",
 )
 
-st.info(f"Sistema seleccionado: {st.session_state['sistema']}")
+st.write("DEBUG → sistema en session_state:", st.session_state.sistema)
