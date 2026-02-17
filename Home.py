@@ -3,12 +3,21 @@ import streamlit as st
 st.set_page_config(page_title="Despacho Económico", layout="wide")
 
 st.title("Simulador de despacho económico (México)")
+
+st.write("Bienvenida/o 👋")
+
+# 🔹 Selector de sistema
+sistema = st.selectbox(
+    "Selecciona el sistema eléctrico:",
+    ["SIN", "BCA", "BCS"]
+)
+
+# 🔹 Guardamos selección
+st.session_state["sistema"] = sistema
+
+st.info(f"Sistema seleccionado: {sistema}")
+
 st.write("""
-Bienvenida/o 👋  
-Esta app (en construcción) descargará demanda horaria real de CENACE para SIN/BCA/BCS
+Esta app (en construcción) descargará demanda horaria real de CENACE
 y correrá un despacho económico con optimización.
-
-Usa el menú de la izquierda para navegar por módulos.
 """)
-
-st.info("Semana 1: Skeleton + documentación mínima. Próximo: demanda CENACE (Semana 2).")
