@@ -1,8 +1,8 @@
 import streamlit as st
+from utils.state import sistema_sidebar
+
+sistema = sistema_sidebar()
 
 st.title("Demanda")
-
-sistema = st.session_state.get("sistema", "SIN")
 st.write(f"Sistema activo: {sistema}")
-
 st.write("Aquí irá la descarga de demanda horaria de CENACE.")
