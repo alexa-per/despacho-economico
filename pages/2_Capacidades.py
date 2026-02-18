@@ -7,6 +7,3 @@ if "sistema" not in st.session_state:
     st.stop()
 
 st.write("Sistema activo:", st.session_state["sistema"])
-
-st.title("Capacidades")
-st.write("Aquí definiremos capacidades por tecnología y casos 2024/2026.")
