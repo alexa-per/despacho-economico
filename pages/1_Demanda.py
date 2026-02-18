@@ -1,19 +1,23 @@
-import streamlit as st
-
-def get_sistema_from_home() -> str:
+def require_sistema() -> str:
     if "sistema" not in st.session_state:
         st.warning("Primero selecciona el sistema en la página **Home** (SIN/BCA/BCS).")
         st.stop()
     return st.session_state["sistema"]
 
-sistema = get_sistema_from_home()
+import streamlit as st
+
+def require_sistema() -> str:
+    if "sistema" not in st.session_state:
+        st.warning("Primero selecciona el sistema en la página **Home** (SIN/BCA/BCS).")
+        st.stop()
+    return st.session_state["sistema"]
+
+sistema = require_sistema()
 st.caption(f"📌 Sistema seleccionado en Home: **{sistema}**")
 
-st.title("Demanda")
-st.write("Aquí irá la descarga y validación de demanda horaria de CENACE.")
-st.write("Sistema activo para esta página:", sistema)
+st.title("Demanda (CENACE)")
+st.write("Aquí irá la descarga y validación de demanda horaria real.")
 
-# Placeholder UI (para que ya se vea el flujo)
 col1, col2 = st.columns(2)
 with col1:
     st.date_input("Fecha inicio", key="fecha_inicio")
