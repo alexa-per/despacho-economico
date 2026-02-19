@@ -20,26 +20,22 @@ if start > end:
 
 @st.cache_data(show_spinner=True)
 def get_demanda_cached(sistema: str, start_str: str, end_str: str) -> pd.DataFrame:
-    # Por ahora mock; en Semana 2 real lo cambiamos por fetch_cenace()
     return mock_demanda(sistema, start_str, end_str)
 
 if st.button("Cargar demanda"):
     df = get_demanda_cached(sistema, start.isoformat(), end.isoformat())
 
     st.subheader("Vista previa")
-    st.dataframe(df.head(20), use_container_width=True)
+    st.dataframe(df.head(30), use_container_width=True)
 
     st.subheader("Validaciones rápidas")
-    # 1) duplicados por timestamp
-    dup = df["timestamp"].duplicated().sum()
+    dup = int(df["timestamp"].duplicated().sum())
     st.write("Duplicados:", dup)
 
-    # 2) faltantes en la secuencia horaria
     idx = pd.date_range(df["timestamp"].min(), df["timestamp"].max(), freq="H")
-    missing = len(idx) - df["timestamp"].nunique()
+    missing = int(len(idx) - df["timestamp"].nunique())
     st.write("Horas faltantes (aprox):", missing)
 
-    # 3) stats básicos
     st.write("Min MW:", float(df["demanda_mw"].min()))
     st.write("Max MW:", float(df["demanda_mw"].max()))
     st.write("Promedio MW:", float(df["demanda_mw"].mean()))
