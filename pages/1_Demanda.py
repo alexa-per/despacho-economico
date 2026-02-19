@@ -42,3 +42,12 @@ if st.button("Cargar demanda"):
 
     st.subheader("Gráfico")
     st.line_chart(df.set_index("timestamp")["demanda_mw"])
+    csv = df.to_csv(index=False).encode("utf-8")
+
+st.download_button(
+    "⬇️ Descargar CSV",
+    data=csv,
+    file_name=f"demanda_{sistema}_{start}_{end}.csv",
+    mime="text/csv",
+)
+
