@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+#Esta funcion es la que da datos falsos tener cuidado de no mantenerla al final!!!
 def mock_demanda(sistema: str, start: str, end: str) -> pd.DataFrame:
     start_dt = pd.to_datetime(start)
     end_dt = pd.to_datetime(end) + pd.Timedelta(days=1)  # incluir día final
@@ -18,4 +19,27 @@ def mock_demanda(sistema: str, start: str, end: str) -> pd.DataFrame:
         "demanda_mw": demanda,
         "sistema": sistema
     })
+    return df
+
+# utils/demanda.py
+from __future__ import annotations
+
+import datetime as dt
+import pandas as pd
+
+from utils.cenace_client import fetch_caezc_mda
+
+
+def demanda_cenace(sistema: str, start_str: str, end_str: str) -> pd.DataFrame:
+    start = dt.date.fromisoformat(start_str)
+    end = dt.date.fromisoformat(end_str)
+
+    df_zonas = fetch_caezc_mda(sistema=sistema, start=start, end=end, zonas=None)
+
+    # Agregamos todas las zonas para tener una sola curva
+    df = (
+        df_zonas.groupby("timestamp", as_index=False)["demanda_mw"]
+        .sum()
+        .sort_values("timestamp")
+    )
     return df
