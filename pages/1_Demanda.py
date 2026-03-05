@@ -5,11 +5,11 @@ from utils.demanda import mock_demanda
 
 st.title("Demanda (CENACE)")
 
-# ✅ Guardaremos aquí el último df cargado para no perderlo entre clicks/páginas
+# Guardaremos aquí el último df cargado para no perderlo entre clicks/páginas
 if "df_demanda" not in st.session_state:
     st.session_state["df_demanda"] = None
 
-# (Opcional pero recomendado) guardar también con qué fechas se generó el df
+# Guardar también con qué fechas se generó el df
 if "demanda_meta" not in st.session_state:
     st.session_state["demanda_meta"] = None
 
@@ -26,21 +26,26 @@ if start > end:
     st.error("La fecha inicio no puede ser mayor que la fecha fin.")
     st.stop()
 
+
 @st.cache_data(show_spinner=True)
 def get_demanda_cached(sistema: str, start_str: str, end_str: str) -> pd.DataFrame:
     return mock_demanda(sistema, start_str, end_str)
 
-# ✅ Botón para cargar demanda
-if st.button("Cargar demanda"):
-    df = get_demanda_cached(sistema, start.isoformat(), end.isoformat())
-    st.session_state["df_demanda"] = df
-    st.session_state["demanda_meta"] = {
-        "sistema": sistema,
-        "start": start.isoformat(),
-        "end": end.isoformat(),
-    }
 
-# ✅ A PARTIR DE AQUÍ: mostrar resultados si ya hay un df cargado
+# Botón para cargar demanda
+if st.button("Cargar demanda"):
+    try:
+        df = get_demanda_cached(sistema, start.isoformat(), end.isoformat())
+        st.session_state["df_demanda"] = df
+        st.session_state["demanda_meta"] = {
+            "sistema": sistema,
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+        }
+    except Exception as e:
+        st.error(f"Error al cargar demanda: {e}")
+
+# A PARTIR DE AQUÍ: mostrar resultados si ya hay un df cargado
 df = st.session_state.get("df_demanda")
 meta = st.session_state.get("demanda_meta")
 
@@ -51,7 +56,15 @@ if df is not None:
     # KPIs
     pico = float(df["demanda_mw"].max())
     prom = float(df["demanda_mw"].mean())
-    energia_mwh = float(df["demanda_mw"].sum())  # MW * 1h = MWh
+    # FIX: se multiplica por el intervalo en horas para calcular MWh correctamente
+    # Detectar intervalo real entre filas (en horas)
+    if len(df) > 1:
+        intervalo_h = (
+            pd.to_datetime(df["timestamp"].iloc[1]) - pd.to_datetime(df["timestamp"].iloc[0])
+        ).total_seconds() / 3600
+    else:
+        intervalo_h = 1.0
+    energia_mwh = float(df["demanda_mw"].sum() * intervalo_h)
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Pico (MW)", f"{pico:,.0f}")
@@ -65,10 +78,10 @@ if df is not None:
     dup = int(df["timestamp"].duplicated().sum())
     st.write("Duplicados:", dup)
 
-    idx = pd.date_range(df["timestamp"].min(), df["timestamp"].max(), freq="H")
+    # FIX: freq="h" en minúscula (pandas >= 2.2 deprecó "H")
+    idx = pd.date_range(df["timestamp"].min(), df["timestamp"].max(), freq="h")
     missing = int(len(idx) - df["timestamp"].nunique())
     st.write("Horas faltantes (aprox):", missing)
-
     st.write("Min MW:", float(df["demanda_mw"].min()))
     st.write("Max MW:", float(df["demanda_mw"].max()))
     st.write("Promedio MW:", float(df["demanda_mw"].mean()))
@@ -76,26 +89,30 @@ if df is not None:
     st.subheader("Gráfico")
     st.line_chart(df.set_index("timestamp")["demanda_mw"])
 
-    # ✅ Descarga CSV (ya no depende de estar dentro del botón)
-    csv = df.to_csv(index=False).encode("utf-8")
+    st.divider()
 
-    # Usar el nombre con el rango real con que se generó (si existe meta)
-    if meta is not None:
-        fname = f"demanda_{meta['sistema']}_{meta['start']}_{meta['end']}.csv"
-    else:
-        fname = f"demanda_{sistema}_{start.isoformat()}_{end.isoformat()}.csv"
+    # Fila con botones de acción separados visualmente
+    col_dl, col_clear = st.columns([3, 1])
 
-    st.download_button(
-        "⬇️ Descargar CSV",
-        data=csv,
-        file_name=fname,
-        mime="text/csv",
-    )
+    with col_dl:
+        csv = df.to_csv(index=False).encode("utf-8")
+        if meta is not None:
+            fname = f"demanda_{meta['sistema']}_{meta['start']}_{meta['end']}.csv"
+        else:
+            fname = f"demanda_{sistema}_{start.isoformat()}_{end.isoformat()}.csv"
 
-    # ✅ Botón para limpiar
-    if st.button("🧹 Limpiar demanda cargada"):
-        st.session_state["df_demanda"] = None
-        st.session_state["demanda_meta"] = None
-        st.rerun()
+        st.download_button(
+            "⬇️ Descargar CSV",
+            data=csv,
+            file_name=fname,
+            mime="text/csv",
+        )
+
+    with col_clear:
+        if st.button("🧹 Limpiar"):
+            st.session_state["df_demanda"] = None
+            st.session_state["demanda_meta"] = None
+            st.rerun()
+
 else:
     st.info("Presiona **Cargar demanda** para generar y visualizar la demanda.")
